@@ -125,7 +125,7 @@ export default async function DashboardPage() {
           </div>
           <div className="divide-y divide-slate-50">
             {proximasTarefas && proximasTarefas.length > 0 ? (
-              proximasTarefas.map((t: any) => (
+              proximasTarefas.map((t: Tarefa) => (
                 <div key={t.id} className="px-6 py-4 hover:bg-slate-50/50 transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -163,7 +163,7 @@ export default async function DashboardPage() {
           </div>
           <div className="divide-y divide-slate-50">
             {urgentes && urgentes.length > 0 ? (
-              urgentes.map((t: any) => {
+              urgentes.map((t: Tarefa) => {
                 const dias = diasParaVencer(t.prazo_entrega)
                 return (
                   <div key={t.id} className="px-6 py-4">

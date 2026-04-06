@@ -7,20 +7,24 @@ import { MateriaBadge, TipoBadge, PriorityBadge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatDate, diasParaVencer } from '@/lib/utils'
 import { GraduationCap, ClipboardList, Search, Filter, X, LogOut, Calendar, Clock, AlertCircle, ChevronDown } from 'lucide-react'
+import type { Turma, Tarefa } from '@/types'
+
+interface ProfessorSimples { id: string; nome: string }
+interface MateriaSimples { id: string; nome: string; cor: string }
 
 export default function AlunoPage() {
   const router = useRouter()
-  const [turma, setTurma] = useState<any>(null)
-  const [tarefas, setTarefas] = useState<any[]>([])
-  const [professores, setProfessores] = useState<any[]>([])
-  const [materias, setMaterias] = useState<any[]>([])
+  const [turma, setTurma] = useState<Turma | null>(null)
+  const [tarefas, setTarefas] = useState<Tarefa[]>([])
+  const [professores, setProfessores] = useState<ProfessorSimples[]>([])
+  const [materias, setMaterias] = useState<MateriaSimples[]>([])
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
   const [fProfessor, setFProfessor] = useState('')
   const [fMateria, setFMateria] = useState('')
   const [fTipo, setFTipo] = useState('')
   const [showFilters, setShowFilters] = useState(false)
-  const [selectedTarefa, setSelectedTarefa] = useState<any>(null)
+  const [selectedTarefa, setSelectedTarefa] = useState<Tarefa | null>(null)
 
   useEffect(() => {
     const t = sessionStorage.getItem('aluno_turma')
