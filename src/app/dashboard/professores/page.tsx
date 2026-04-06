@@ -6,7 +6,9 @@ import TopBar from '@/components/layout/TopBar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Plus, Search, Edit2, Trash2, X, Loader2, Users, Mail, Phone, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Profile, Materia } from '@/types'
+import type { Profile } from '@/types'
+
+type MateriaSimples = { id: string; nome: string; cor: string }
 
 interface ProfessorComMaterias {
   id: string
@@ -20,7 +22,7 @@ interface ProfessorComMaterias {
 export default function ProfessoresPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [professores, setProfessores] = useState<ProfessorComMaterias[]>([])
-  const [materias, setMaterias] = useState<Materia[]>([])
+  const [materias, setMaterias] = useState<MateriaSimples[]>([])
   const [busca, setBusca] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<ProfessorComMaterias | null>(null)

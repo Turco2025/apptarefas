@@ -10,14 +10,18 @@ import {
   ClipboardList, Plus, Search, Filter, X, Calendar, Clock,
   Edit2, Trash2, ChevronDown, Loader2, AlertCircle
 } from 'lucide-react'
-import type { Profile, Tarefa, Turma, Professor, Materia } from '@/types'
+import type { Profile, Tarefa } from '@/types'
+
+type TurmaSimples = { id: string; nome: string; serie: string }
+type ProfessorSimples = { id: string; nome: string }
+type MateriaSimples = { id: string; nome: string; cor: string }
 
 interface Props {
   profile: Profile
   initialTarefas: Tarefa[]
-  turmas: Turma[]
-  professores: Professor[]
-  materias: Materia[]
+  turmas: TurmaSimples[]
+  professores: ProfessorSimples[]
+  materias: MateriaSimples[]
 }
 
 const TIPOS = ['Tarefa','Prova','Trabalho','Projeto','Apresentação','Exercício','Seminário','Outro']
