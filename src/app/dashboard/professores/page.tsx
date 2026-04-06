@@ -4,18 +4,29 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import TopBar from '@/components/layout/TopBar'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Plus, Search, Edit2, Trash2, X, Loader2, Users, Mail, Phone, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, X, Loader2, Users, Mail, Phone, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { Profile, Materia } from '@/types'
+
+interface ProfessorComMaterias {
+  id: string
+  nome: string
+  email: string | null
+  telefone: string | null
+  active: boolean
+  professor_materias: Array<{ materia_id: string; materias: { nome: string; cor: string } | null }>
+}
 
 export default function ProfessoresPage() {
-  const [profile, setProfile] = useState<any>(null)
-  const [professores, setProfessores] = useState<any[]>([])
-  const [materias, setMaterias] = useState<any[]>([])
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [professores, setProfessores] = useState<ProfessorComMaterias[]>([])
+  const [materias, setMaterias] = useState<Materia[]>([])
   const [busca, setBusca] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const [editing, setEditing] = useState<any>(null)
+  const [editing, setEditing] = useState<ProfessorComMaterias | null>(null)
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [form, setForm] = useState({ nome: '', email: '', telefone: '', active: true, materias: [] as string[] })
 
   useEffect(() => {
@@ -47,11 +58,11 @@ export default function ProfessoresPage() {
     setShowModal(true)
   }
 
-  function openEdit(p: any) {
+  function openEdit(p: ProfessorComMaterias) {
     setForm({
       nome: p.nome, email: p.email || '', telefone: p.telefone || '',
       active: p.active,
-      materias: p.professor_materias?.map((pm: any) => pm.materia_id) || []
+      materias: p.professor_materias?.map(pm => pm.materia_id) || []
     })
     setEditing(p)
     setShowModal(true)
@@ -98,8 +109,14 @@ export default function ProfessoresPage() {
   async function handleDelete(id: string) {
     if (!confirm('Excluir este professor?')) return
     setDeletingId(id)
+    setDeleteError(null)
     const supabase = createClient()
-    await supabase.from('professores').delete().eq('id', id)
+    const { error } = await supabase.from('professores').delete().eq('id', id)
+    if (error) {
+      setDeleteError('Erro ao excluir professor. Tente novamente.')
+      setDeletingId(null)
+      return
+    }
     setProfessores(prev => prev.filter(p => p.id !== id))
     setDeletingId(null)
   }
@@ -118,6 +135,14 @@ export default function ProfessoresPage() {
   return (
     <div className="p-6 lg:p-8 space-y-6 animate-fade-in">
       <TopBar profile={profile} title="Professores" />
+
+      {deleteError && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          {deleteError}
+          <button onClick={() => setDeleteError(null)} className="ml-auto"><X className="w-4 h-4" /></button>
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
         <div>
@@ -157,7 +182,7 @@ export default function ProfessoresPage() {
               {p.telefone && <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1"><Phone className="w-3.5 h-3.5"/>{p.telefone}</div>}
               {p.professor_materias?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-3">
-                  {p.professor_materias.map((pm: any) => (
+                  {p.professor_materias.map(pm => (
                     <span key={pm.materia_id} className="text-xs px-2 py-0.5 rounded-full font-medium"
                       style={{ backgroundColor: pm.materias?.cor + '20', color: pm.materias?.cor, border: `1px solid ${pm.materias?.cor}30` }}>
                       {pm.materias?.nome}

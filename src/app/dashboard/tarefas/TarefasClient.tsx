@@ -10,26 +10,28 @@ import {
   ClipboardList, Plus, Search, Filter, X, Calendar, Clock,
   Edit2, Trash2, ChevronDown, Loader2, AlertCircle
 } from 'lucide-react'
-import type { Profile } from '@/types'
+import type { Profile, Tarefa, Turma, Professor, Materia } from '@/types'
 
 interface Props {
-  profile: any
-  initialTarefas: any[]
-  turmas: any[]
-  professores: any[]
-  materias: any[]
+  profile: Profile
+  initialTarefas: Tarefa[]
+  turmas: Turma[]
+  professores: Professor[]
+  materias: Materia[]
 }
 
 const TIPOS = ['Tarefa','Prova','Trabalho','Projeto','Apresentação','Exercício','Seminário','Outro']
 const PRIORIDADES = ['Baixa','Normal','Alta','Urgente']
 
 export default function TarefasClient({ profile, initialTarefas, turmas, professores, materias }: Props) {
-  const [tarefas, setTarefas] = useState(initialTarefas)
+  const [tarefas, setTarefas] = useState<Tarefa[]>(initialTarefas)
   const [showModal, setShowModal] = useState(false)
-  const [editingTarefa, setEditingTarefa] = useState<any>(null)
+  const [editingTarefa, setEditingTarefa] = useState<Tarefa | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // Filtros
   const [busca, setBusca] = useState('')
@@ -51,7 +53,7 @@ export default function TarefasClient({ profile, initialTarefas, turmas, profess
   }
   const [form, setForm] = useState(emptyForm)
 
-  const canEdit = (t: any) => {
+  const canEdit = (t: Tarefa) => {
     if (profile.role === 'admin' || profile.role === 'coordinator') return true
     return t.criado_por_user_id === profile.id
   }
@@ -87,10 +89,11 @@ export default function TarefasClient({ profile, initialTarefas, turmas, profess
   function openNew() {
     setForm(emptyForm)
     setEditingTarefa(null)
+    setSaveError(null)
     setShowModal(true)
   }
 
-  function openEdit(t: any) {
+  function openEdit(t: Tarefa) {
     setForm({
       turma_id: t.turma_id, professor_id: t.professor_id,
       materia_id: t.materia_id, titulo: t.titulo,
@@ -99,12 +102,14 @@ export default function TarefasClient({ profile, initialTarefas, turmas, profess
       data_aula: t.data_aula, prazo_entrega: t.prazo_entrega || '',
     })
     setEditingTarefa(t)
+    setSaveError(null)
     setShowModal(true)
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
+    setSaveError(null)
     const supabase = createClient()
 
     const payload = { ...form, prazo_entrega: form.prazo_entrega || null }
@@ -116,18 +121,24 @@ export default function TarefasClient({ profile, initialTarefas, turmas, profess
         .eq('id', editingTarefa.id)
         .select('*, turmas(nome), professores(nome), materias(nome, cor), profiles(name)')
         .single()
-      if (!error && data) {
-        setTarefas(prev => prev.map(t => t.id === data.id ? data : t))
+      if (error) {
+        setSaveError('Erro ao atualizar tarefa. Tente novamente.')
+        setSaving(false)
+        return
       }
+      if (data) setTarefas(prev => prev.map(t => t.id === data.id ? data : t))
     } else {
       const { data, error } = await supabase
         .from('tarefas')
         .insert({ ...payload, criado_por_user_id: profile.id })
         .select('*, turmas(nome), professores(nome), materias(nome, cor), profiles(name)')
         .single()
-      if (!error && data) {
-        setTarefas(prev => [data, ...prev])
+      if (error) {
+        setSaveError('Erro ao criar tarefa. Tente novamente.')
+        setSaving(false)
+        return
       }
+      if (data) setTarefas(prev => [data, ...prev])
     }
     setSaving(false)
     setShowModal(false)
@@ -136,15 +147,21 @@ export default function TarefasClient({ profile, initialTarefas, turmas, profess
   async function handleDelete(id: string) {
     if (!confirm('Confirmar exclusão desta tarefa?')) return
     setDeletingId(id)
+    setDeleteError(null)
     const supabase = createClient()
-    await supabase.from('tarefas').delete().eq('id', id)
+    const { error } = await supabase.from('tarefas').delete().eq('id', id)
+    if (error) {
+      setDeleteError('Erro ao excluir tarefa. Tente novamente.')
+      setDeletingId(null)
+      return
+    }
     setTarefas(prev => prev.filter(t => t.id !== id))
     setDeletingId(null)
   }
 
   return (
     <div className="p-6 lg:p-8 space-y-6 animate-fade-in">
-      <TopBar profile={profile as Profile} title="Tarefas" />
+      <TopBar profile={profile} title="Tarefas" />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
@@ -162,6 +179,15 @@ export default function TarefasClient({ profile, initialTarefas, turmas, profess
           </button>
         )}
       </div>
+
+      {/* Erro de exclusão */}
+      {deleteError && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          {deleteError}
+          <button onClick={() => setDeleteError(null)} className="ml-auto"><X className="w-4 h-4" /></button>
+        </div>
+      )}
 
       {/* Busca + Filtros */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-4">
@@ -202,18 +228,18 @@ export default function TarefasClient({ profile, initialTarefas, turmas, profess
               <select value={fTurma} onChange={e => setFTurma(e.target.value)}
                 className="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">Todas as turmas</option>
-                {turmas.map((t: any) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+                {turmas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
               </select>
             )}
             <select value={fProfessor} onChange={e => setFProfessor(e.target.value)}
               className="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <option value="">Todos os professores</option>
-              {professores.map((p: any) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+              {professores.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
             </select>
             <select value={fMateria} onChange={e => setFMateria(e.target.value)}
               className="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <option value="">Todas as matérias</option>
-              {materias.map((m: any) => <option key={m.id} value={m.id}>{m.nome}</option>)}
+              {materias.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
             </select>
             <select value={fTipo} onChange={e => setFTipo(e.target.value)}
               className="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -251,9 +277,10 @@ export default function TarefasClient({ profile, initialTarefas, turmas, profess
         />
       ) : (
         <div className="grid gap-4">
-          {filtered.map((t: any) => {
+          {filtered.map(t => {
             const dias = diasParaVencer(t.prazo_entrega)
             const prazoUrgente = dias !== null && dias <= 3
+            const professor = t.professores
             return (
               <div
                 key={t.id}
@@ -275,10 +302,10 @@ export default function TarefasClient({ profile, initialTarefas, turmas, profess
                       <h3 className="font-semibold text-slate-900 text-base">{t.titulo}</h3>
                       {t.descricao && <p className="text-sm text-slate-500 mt-1 line-clamp-2">{t.descricao}</p>}
                       <div className="flex items-center gap-4 mt-3 flex-wrap">
-                        {t.professores && (
+                        {professor && (
                           <span className="text-xs text-slate-500 flex items-center gap-1">
                             <span className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-[10px] font-bold">P</span>
-                            {t.professores.nome}
+                            {professor.nome}
                           </span>
                         )}
                         {t.turmas && (
@@ -339,6 +366,12 @@ export default function TarefasClient({ profile, initialTarefas, turmas, profess
               </button>
             </div>
             <form onSubmit={handleSave} className="p-6 space-y-5">
+              {saveError && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {saveError}
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {profile.role !== 'representative' && (
                   <div>
@@ -346,7 +379,7 @@ export default function TarefasClient({ profile, initialTarefas, turmas, profess
                     <select required value={form.turma_id} onChange={e => setForm({...form, turma_id: e.target.value})}
                       className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                       <option value="">Selecionar turma</option>
-                      {turmas.map((t: any) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+                      {turmas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
                     </select>
                   </div>
                 )}
@@ -355,7 +388,7 @@ export default function TarefasClient({ profile, initialTarefas, turmas, profess
                   <select required value={form.professor_id} onChange={e => setForm({...form, professor_id: e.target.value})}
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="">Selecionar professor</option>
-                    {professores.map((p: any) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                    {professores.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                   </select>
                 </div>
                 <div>
@@ -363,7 +396,7 @@ export default function TarefasClient({ profile, initialTarefas, turmas, profess
                   <select required value={form.materia_id} onChange={e => setForm({...form, materia_id: e.target.value})}
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="">Selecionar matéria</option>
-                    {materias.map((m: any) => <option key={m.id} value={m.id}>{m.nome}</option>)}
+                    {materias.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
                   </select>
                 </div>
                 <div>

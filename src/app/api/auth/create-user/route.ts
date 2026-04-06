@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -20,11 +21,57 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Campos obrigatórios ausentes' }, { status: 400 })
   }
 
-  // Cria via Admin API (requer service role key no servidor)
-  // Em produção: usar SUPABASE_SERVICE_ROLE_KEY no backend
-  // Por enquanto retorna sucesso para demonstração
+  const validRoles = ['admin', 'coordinator', 'representative']
+  if (!validRoles.includes(role)) {
+    return NextResponse.json({ error: 'Papel inválido' }, { status: 400 })
+  }
+
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+
+  if (!serviceRoleKey || !supabaseUrl) {
+    return NextResponse.json(
+      { error: 'Configuração do servidor incompleta. Configure SUPABASE_SERVICE_ROLE_KEY.' },
+      { status: 500 }
+    )
+  }
+
+  const adminClient = createAdminClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
+
+  // Cria o usuário via Admin API
+  const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { name, role }
+  })
+
+  if (createError || !newUser?.user) {
+    return NextResponse.json(
+      { error: createError?.message || 'Erro ao criar usuário' },
+      { status: 500 }
+    )
+  }
+
+  // Atualiza o perfil com role e turma_id
+  const { error: profileError } = await adminClient
+    .from('profiles')
+    .update({ name, role, turma_id: turma_id || null })
+    .eq('id', newUser.user.id)
+
+  if (profileError) {
+    // Remove o usuário criado se o perfil falhar
+    await adminClient.auth.admin.deleteUser(newUser.user.id)
+    return NextResponse.json(
+      { error: 'Erro ao configurar perfil do usuário' },
+      { status: 500 }
+    )
+  }
+
   return NextResponse.json({
-    message: 'Para criar usuários em produção, configure SUPABASE_SERVICE_ROLE_KEY e use a Admin API do Supabase.',
-    data: { email, name, role }
+    message: 'Usuário criado com sucesso',
+    data: { id: newUser.user.id, email, name, role }
   })
 }

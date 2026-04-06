@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import TopBar from '@/components/layout/TopBar'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Plus, Search, Edit2, Trash2, X, Loader2, School, Hash, Clock, CheckCircle, XCircle, Copy } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, X, Loader2, School, Hash, Clock, CheckCircle, XCircle, Copy, AlertCircle } from 'lucide-react'
+import type { Profile, Turma } from '@/types'
 import { cn } from '@/lib/utils'
 
 const TURNOS = ['Matutino','Vespertino','Noturno','Integral']
@@ -16,13 +17,14 @@ const TURNO_COLORS: Record<string,string> = {
 }
 
 export default function TurmasPage() {
-  const [profile, setProfile] = useState<any>(null)
-  const [turmas, setTurmas] = useState<any[]>([])
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [turmas, setTurmas] = useState<Turma[]>([])
   const [busca, setBusca] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const [editing, setEditing] = useState<any>(null)
+  const [editing, setEditing] = useState<Turma | null>(null)
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string|null>(null)
   const [form, setForm] = useState({ nome: '', serie: '', turno: 'Matutino', access_code: '', active: true })
 
@@ -45,7 +47,8 @@ export default function TurmasPage() {
   )
 
   function generateCode(nome: string) {
-    return nome.toUpperCase().replace(/\s+/g,'').substring(0,10) + Math.floor(Math.random()*100)
+    const suffix = Math.floor(Math.random() * 9000 + 1000) // 1000–9999
+    return nome.toUpperCase().replace(/\s+/g, '').substring(0, 8) + suffix
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -66,8 +69,14 @@ export default function TurmasPage() {
   async function handleDelete(id: string) {
     if (!confirm('Excluir esta turma?')) return
     setDeletingId(id)
+    setDeleteError(null)
     const supabase = createClient()
-    await supabase.from('turmas').delete().eq('id', id)
+    const { error } = await supabase.from('turmas').delete().eq('id', id)
+    if (error) {
+      setDeleteError('Erro ao excluir turma. Tente novamente.')
+      setDeletingId(null)
+      return
+    }
     setTurmas(prev => prev.filter(t => t.id !== id))
     setDeletingId(null)
   }
@@ -83,6 +92,14 @@ export default function TurmasPage() {
   return (
     <div className="p-6 lg:p-8 space-y-6 animate-fade-in">
       <TopBar profile={profile} title="Turmas" />
+
+      {deleteError && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          {deleteError}
+          <button onClick={() => setDeleteError(null)} className="ml-auto"><X className="w-4 h-4" /></button>
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
         <div>
