@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import TopBar from '@/components/layout/TopBar'
-import { Settings, Shield, Bell, Database, Info, CheckCircle } from 'lucide-react'
+import { Settings, Shield, Info, CheckCircle } from 'lucide-react'
+import type { Profile } from '@/types'
 
 export default function ConfiguracoesPage() {
-  const [profile, setProfile] = useState<any>(null)
-  const [saved, setSaved] = useState(false)
+  const [profile, setProfile] = useState<Profile | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -44,7 +44,7 @@ export default function ConfiguracoesPage() {
             {[
               { label: 'Sistema', value: 'AppTarefas v1.0' },
               { label: 'Banco de dados', value: 'Supabase (PostgreSQL)' },
-              { label: 'Framework', value: 'Next.js 14' },
+              { label: 'Framework', value: 'Next.js 16' },
               { label: 'Modo', value: 'PWA (Progressive Web App)' },
             ].map(item => (
               <div key={item.label} className="flex justify-between py-2 border-b border-slate-50 last:border-0">

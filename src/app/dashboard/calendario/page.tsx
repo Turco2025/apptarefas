@@ -21,19 +21,10 @@ export default async function CalendarioPage() {
 
   const { data: tarefas } = await query
 
-  const [{ data: professores }, { data: materias }, { data: turmas }] = await Promise.all([
-    supabase.from('professores').select('id, nome').eq('active', true).order('nome'),
-    supabase.from('materias').select('id, nome, cor').eq('active', true).order('nome'),
-    supabase.from('turmas').select('id, nome').eq('active', true).order('nome'),
-  ])
-
   return (
     <CalendarioClient
       profile={profile}
       tarefas={tarefas || []}
-      professores={professores || []}
-      materias={materias || []}
-      turmas={turmas || []}
     />
   )
 }

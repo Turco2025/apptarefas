@@ -27,30 +27,28 @@ export default function AlunoPage() {
   const [selectedTarefa, setSelectedTarefa] = useState<Tarefa | null>(null)
 
   useEffect(() => {
-    const t = sessionStorage.getItem('aluno_turma')
-    if (!t) { router.push('/acesso-aluno'); return }
-    const turmaData = JSON.parse(t)
-    setTurma(turmaData)
+    async function init() {
+      const t = sessionStorage.getItem('aluno_turma')
+      if (!t) { router.push('/acesso-aluno'); return }
+      const turmaData = JSON.parse(t) as Turma
+      setTurma(turmaData)
 
-    async function load() {
       const supabase = createClient()
-      const { data: tars } = await supabase
-        .from('tarefas')
-        .select('*, professores(nome), materias(nome, cor)')
-        .eq('turma_id', turmaData.id)
-        .order('data_aula', { ascending: false })
-
-      const { data: profs } = await supabase
-        .from('professores').select('id, nome').eq('active', true).order('nome')
-      const { data: mats } = await supabase
-        .from('materias').select('id, nome, cor').eq('active', true).order('nome')
+      const [{ data: tars }, { data: profs }, { data: mats }] = await Promise.all([
+        supabase.from('tarefas')
+          .select('*, professores(nome), materias(nome, cor)')
+          .eq('turma_id', turmaData.id)
+          .order('data_aula', { ascending: false }),
+        supabase.from('professores').select('id, nome').eq('active', true).order('nome'),
+        supabase.from('materias').select('id, nome, cor').eq('active', true).order('nome'),
+      ])
 
       setTarefas(tars || [])
       setProfessores(profs || [])
       setMaterias(mats || [])
       setLoading(false)
     }
-    load()
+    init()
   }, [router])
 
   const filtered = useMemo(() => {

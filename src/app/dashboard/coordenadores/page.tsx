@@ -6,10 +6,11 @@ import TopBar from '@/components/layout/TopBar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { UserCog, Mail, CheckCircle, XCircle, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { Profile } from '@/types'
 
 export default function CoordenadoresPage() {
-  const [profile, setProfile] = useState<any>(null)
-  const [coordenadores, setCoordenadores] = useState<any[]>([])
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [coordenadores, setCoordenadores] = useState<Profile[]>([])
 
   useEffect(() => {
     async function load() {

@@ -6,10 +6,15 @@ import TopBar from '@/components/layout/TopBar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Users, Mail, School, CheckCircle, XCircle, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { Profile } from '@/types'
+
+interface RepresentanteComTurma extends Profile {
+  turmas: { nome: string; serie: string } | null
+}
 
 export default function RepresentantesPage() {
-  const [profile, setProfile] = useState<any>(null)
-  const [representantes, setRepresentantes] = useState<any[]>([])
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [representantes, setRepresentantes] = useState<RepresentanteComTurma[]>([])
 
   useEffect(() => {
     async function load() {

@@ -6,20 +6,17 @@ import { MateriaBadge, TipoBadge, PriorityBadge } from '@/components/ui/Badge'
 import { formatDate } from '@/lib/utils'
 import TopBar from '@/components/layout/TopBar'
 import { ChevronLeft, ChevronRight, Plus, X, Clock } from 'lucide-react'
-import type { Profile } from '@/types'
+import type { Profile, Tarefa } from '@/types'
 
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
 interface Props {
-  profile: any
-  tarefas: any[]
-  professores: any[]
-  materias: any[]
-  turmas: any[]
+  profile: Profile
+  tarefas: Tarefa[]
 }
 
-export default function CalendarioClient({ profile, tarefas, professores, materias, turmas }: Props) {
+export default function CalendarioClient({ profile, tarefas }: Props) {
   const router = useRouter()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -29,7 +26,7 @@ export default function CalendarioClient({ profile, tarefas, professores, materi
 
   // Mapa de tarefas por data
   const tarefasPorData = useMemo(() => {
-    const map: Record<string, any[]> = {}
+    const map: Record<string, Tarefa[]> = {}
     tarefas.forEach(t => {
       if (!map[t.data_aula]) map[t.data_aula] = []
       map[t.data_aula].push(t)
@@ -249,7 +246,7 @@ export default function CalendarioClient({ profile, tarefas, professores, materi
                 )}
               </div>
             ) : (
-              selectedTarefas.map((t: any) => (
+              selectedTarefas.map((t: Tarefa) => (
                 <div key={t.id} className="px-5 py-4">
                   <div className="flex items-start gap-2 mb-2">
                     <TipoBadge tipo={t.tipo_tarefa} />

@@ -6,13 +6,17 @@ import TopBar from '@/components/layout/TopBar'
 import { MateriaBadge } from '@/components/ui/Badge'
 import { FileText, Download, Filter, BarChart3, TrendingUp, School, Users, BookOpen } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import type { Profile, Tarefa } from '@/types'
+
+type ItemSimples = { id: string; nome: string }
+type MateriaSimples = { id: string; nome: string; cor: string }
 
 export default function RelatoriosPage() {
-  const [profile, setProfile] = useState<any>(null)
-  const [tarefas, setTarefas] = useState<any[]>([])
-  const [turmas, setTurmas] = useState<any[]>([])
-  const [professores, setProfessores] = useState<any[]>([])
-  const [materias, setMaterias] = useState<any[]>([])
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [tarefas, setTarefas] = useState<Tarefa[]>([])
+  const [turmas, setTurmas] = useState<ItemSimples[]>([])
+  const [professores, setProfessores] = useState<ItemSimples[]>([])
+  const [materias, setMaterias] = useState<MateriaSimples[]>([])
   const [fTurma, setFTurma] = useState('')
   const [fProfessor, setFProfessor] = useState('')
   const [fMateria, setFMateria] = useState('')

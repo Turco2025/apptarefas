@@ -6,15 +6,16 @@ import TopBar from '@/components/layout/TopBar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Plus, Search, Edit2, Trash2, X, Loader2, BookOpen, CheckCircle, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { Profile, Materia } from '@/types'
 
 const CORES = ['#6366F1','#EC4899','#F59E0B','#10B981','#06B6D4','#8B5CF6','#EF4444','#F97316','#84CC16','#F43F5E','#0EA5E9','#14B8A6']
 
 export default function MateriasPage() {
-  const [profile, setProfile] = useState<any>(null)
-  const [materias, setMaterias] = useState<any[]>([])
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [materias, setMaterias] = useState<Materia[]>([])
   const [busca, setBusca] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const [editing, setEditing] = useState<any>(null)
+  const [editing, setEditing] = useState<Materia | null>(null)
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [form, setForm] = useState({ nome: '', descricao: '', cor: '#6366F1', active: true })

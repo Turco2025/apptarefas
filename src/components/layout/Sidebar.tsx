@@ -43,25 +43,17 @@ const ROLE_COLORS: Record<string, string> = {
   representative: 'bg-emerald-100 text-emerald-700',
 }
 
-interface SidebarProps {
+interface SidebarContentProps {
   profile: Profile
+  collapsed: boolean
+  pathname: string
+  visibleItems: NavItem[]
+  onCloseMobile: () => void
+  onLogout: () => void
 }
 
-export default function Sidebar({ profile }: SidebarProps) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [collapsed, setCollapsed] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
-
-  const visibleItems = navItems.filter(item => item.roles.includes(profile.role))
-
-  async function handleLogout() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
-
-  const SidebarContent = () => (
+function SidebarContent({ profile, collapsed, pathname, visibleItems, onCloseMobile, onLogout }: SidebarContentProps) {
+  return (
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className={cn(
@@ -87,7 +79,7 @@ export default function Sidebar({ profile }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setMobileOpen(false)}
+              onClick={onCloseMobile}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group',
                 isActive
@@ -129,7 +121,7 @@ export default function Sidebar({ profile }: SidebarProps) {
           </div>
         )}
         <button
-          onClick={handleLogout}
+          onClick={onLogout}
           className={cn(
             'flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all group',
             collapsed && 'justify-center'
@@ -142,6 +134,25 @@ export default function Sidebar({ profile }: SidebarProps) {
       </div>
     </div>
   )
+}
+
+interface SidebarProps {
+  profile: Profile
+}
+
+export default function Sidebar({ profile }: SidebarProps) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const visibleItems = navItems.filter(item => item.roles.includes(profile.role))
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   return (
     <>
@@ -166,7 +177,14 @@ export default function Sidebar({ profile }: SidebarProps) {
         'fixed left-0 top-0 h-full w-64 bg-white z-50 shadow-2xl transform transition-transform duration-300 lg:hidden',
         mobileOpen ? 'translate-x-0' : '-translate-x-full'
       )}>
-        <SidebarContent />
+        <SidebarContent
+          profile={profile}
+          collapsed={false}
+          pathname={pathname}
+          visibleItems={visibleItems}
+          onCloseMobile={() => setMobileOpen(false)}
+          onLogout={handleLogout}
+        />
       </div>
 
       {/* Desktop sidebar */}
@@ -174,7 +192,14 @@ export default function Sidebar({ profile }: SidebarProps) {
         'hidden lg:flex flex-col h-full bg-white border-r border-slate-100 shadow-sm transition-all duration-300',
         collapsed ? 'w-16' : 'w-64'
       )}>
-        <SidebarContent />
+        <SidebarContent
+          profile={profile}
+          collapsed={collapsed}
+          pathname={pathname}
+          visibleItems={visibleItems}
+          onCloseMobile={() => setMobileOpen(false)}
+          onLogout={handleLogout}
+        />
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all"
