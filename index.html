@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DNA 3D — Interativo por Webcam</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- Hero -->
+    <section id="hero">
+      <canvas id="dna-canvas"></canvas>
+
+      <!-- Overlay de texto -->
+      <div id="hero-content">
+        <p id="hero-label">VISUALIZAÇÃO CIENTÍFICA</p>
+        <h1 id="hero-title">
+          DNA<br /><span>Interativo</span>
+        </h1>
+        <p id="hero-sub">
+          Controle a hélice dupla com sua mão via webcam.<br />
+          Pinça para zoom · Direção para rotação.
+        </p>
+      </div>
+
+      <!-- Painel de status -->
+      <div id="status-panel">
+        <div class="status-row">
+          <span class="status-dot" id="dot-camera"></span>
+          <span class="status-label">Câmera</span>
+          <span class="status-value" id="val-camera">aguardando</span>
+        </div>
+        <div class="status-row">
+          <span class="status-dot" id="dot-hand"></span>
+          <span class="status-label">Mão</span>
+          <span class="status-value" id="val-hand">não detectada</span>
+        </div>
+        <div class="status-row">
+          <span class="status-dot neutral"></span>
+          <span class="status-label">Pinça</span>
+          <span class="status-value" id="val-pinch">—</span>
+        </div>
+        <div class="status-row">
+          <span class="status-dot neutral"></span>
+          <span class="status-label">Rotação</span>
+          <span class="status-value" id="val-dir">auto</span>
+        </div>
+      </div>
+
+      <!-- Preview da webcam -->
+      <div id="cam-wrapper">
+        <video id="cam-video" autoplay muted playsinline></video>
+        <div id="cam-label">WEBCAM</div>
+      </div>
+    </section>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

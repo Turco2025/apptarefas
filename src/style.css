@@ -1,0 +1,207 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --blue: #00d4ff;
+  --purple: #7c3aed;
+  --green: #00ff88;
+  --dark: #050816;
+  --panel-bg: rgba(5, 8, 22, 0.75);
+  --glass: rgba(255, 255, 255, 0.04);
+  --border: rgba(0, 212, 255, 0.15);
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: var(--dark);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ─── Hero ──────────────────────────────────────────── */
+#hero {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#dna-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 0;
+}
+
+/* ─── Conteúdo central ───────────────────────────────── */
+#hero-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+#hero-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.35em;
+  color: var(--blue);
+  margin-bottom: 1.2rem;
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+#hero-title {
+  font-size: clamp(3.5rem, 10vw, 8rem);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  text-shadow: 0 0 80px rgba(0, 212, 255, 0.4);
+}
+
+#hero-title span {
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+#hero-sub {
+  margin-top: 1.8rem;
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.5);
+  max-width: 420px;
+  margin-inline: auto;
+}
+
+/* ─── Painel de status ──────────────────────────────── */
+#status-panel {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 20;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #444;
+  flex-shrink: 0;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.status-dot.ok {
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+}
+
+.status-dot.warn {
+  background: #ffaa00;
+  box-shadow: 0 0 8px #ffaa00;
+}
+
+.status-dot.neutral {
+  background: rgba(255,255,255,0.2);
+}
+
+.status-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  width: 52px;
+  flex-shrink: 0;
+}
+
+.status-value {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--blue);
+  letter-spacing: 0.05em;
+  margin-left: auto;
+}
+
+/* ─── Preview webcam ────────────────────────────────── */
+#cam-wrapper {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  z-index: 20;
+  width: 180px;
+  aspect-ratio: 4/3;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.1);
+}
+
+#cam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  display: block;
+}
+
+#cam-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-align: center;
+  padding: 4px;
+  background: rgba(0,0,0,0.5);
+  color: var(--blue);
+}
+
+/* ─── Partículas bg ─────────────────────────────────── */
+#hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(124,58,237,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 20% 80%, rgba(0,212,255,0.06) 0%, transparent 60%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ─── Responsivo ────────────────────────────────────── */
+@media (max-width: 640px) {
+  #status-panel { top: 12px; left: 12px; min-width: 180px; }
+  #cam-wrapper  { width: 120px; bottom: 12px; right: 12px; }
+  #hero-sub     { font-size: 0.85rem; }
+}
