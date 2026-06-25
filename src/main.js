@@ -138,12 +138,12 @@ const pMat = new THREE.PointsMaterial({ color: 0x00d4ff, size: 0.08, transparent
 scene.add(new THREE.Points(pGeo, pMat));
 
 // ─── Estado ──────────────────────────────────────────────────────────────────
-let autoRotate   = true;
-let rotDir       = 1;          // +1 direita, -1 esquerda
-let targetRotY   = 0;
+let autoRotate   = true;   // sem mão detectada
+let dnaFrozen    = false;  // mão aberta → para
+let rotDir       = 1;
 let currentRotY  = 0;
-let targetZ      = 18;         // posição Z da câmera
-let pinchActive  = false;
+let targetZ      = 18;
+let prevPinchDist = null;  // para detectar abertura/fechamento da pinça
 
 // ─── Webcam ───────────────────────────────────────────────────────────────────
 let handLandmarker = null;
@@ -182,46 +182,64 @@ async function initMediaPipe() {
 }
 
 // ─── Detecção de gestos ───────────────────────────────────────────────────────
+
+// Retorna true se a ponta do dedo está acima da junta PIP (dedo estendido)
+function fingerExtended(tip, pip) {
+  return tip.y < pip.y;
+}
+
 function processHand(landmarks) {
-  // Ponto 0 = pulso, 8 = ponta indicador, 4 = ponta polegar
-  const wrist = landmarks[0];
-  const thumb = landmarks[4];
-  const index = landmarks[8];
+  const thumb    = landmarks[4];
+  const indexTip = landmarks[8];  const indexPIP = landmarks[6];
+  const midTip   = landmarks[12]; const midPIP   = landmarks[10];
+  const ringTip  = landmarks[16]; const ringPIP  = landmarks[14];
+  const pinkyTip = landmarks[20]; const pinkyPIP = landmarks[18];
 
-  // Direção: posição X do pulso (0=esquerda, 1=direita na imagem espelhada)
-  // Vídeo está espelhado, então: x > 0.6 → mão à direita → DNA gira dir.
-  const wx = wrist.x;
-  if (wx > 0.6) {
+  // Quantos dedos (exceto polegar) estão estendidos
+  const extended =
+    (fingerExtended(indexTip, indexPIP) ? 1 : 0) +
+    (fingerExtended(midTip,   midPIP)   ? 1 : 0) +
+    (fingerExtended(ringTip,  ringPIP)  ? 1 : 0) +
+    (fingerExtended(pinkyTip, pinkyPIP) ? 1 : 0);
+
+  // ── Mão aberta (4 dedos estendidos) → DNA para ──────────────────────────
+  if (extended >= 4) {
     autoRotate = false;
-    rotDir = 1;
-    setVal("val-dir", "→ direita");
-  } else if (wx < 0.4) {
-    autoRotate = false;
-    rotDir = -1;
-    setVal("val-dir", "← esquerda");
+    dnaFrozen  = true;
+    setVal("val-dir", "parado");
   } else {
+    // ── Mão fechada/parcial → DNA gira ──────────────────────────────────
     autoRotate = false;
-    rotDir = 0;
-    setVal("val-dir", "centro");
+    dnaFrozen  = false;
+    rotDir     = 1;
+    setVal("val-dir", "girando");
   }
 
-  // Pinça: distância entre polegar e indicador
-  const dx = thumb.x - index.x;
-  const dy = thumb.y - index.y;
+  // ── Pinça: distância entre polegar e indicador ───────────────────────────
+  const dx = thumb.x - indexTip.x;
+  const dy = thumb.y - indexTip.y;
   const pinchDist = Math.sqrt(dx * dx + dy * dy);
-  const pinchNorm = Math.max(0, Math.min(1, pinchDist / 0.3));  // 0=fechado, 1=aberto
+  const pinchPct  = Math.round(pinchDist * 400);  // valor visual 0-100+
 
-  setVal("val-pinch", pinchNorm.toFixed(2));
+  if (prevPinchDist !== null) {
+    const delta = pinchDist - prevPinchDist;
+    const THRESHOLD = 0.006;
 
-  // Zoom: pinça fechada (<0.15) → aproxima; aberta → afasta
-  if (pinchDist < 0.08) {
-    targetZ = Math.max(5, targetZ - 0.3);
-    setVal("val-pinch", `${pinchNorm.toFixed(2)} 🔍`);
-  } else if (pinchDist > 0.22) {
-    targetZ = Math.min(28, targetZ + 0.15);
+    if (delta > THRESHOLD) {
+      // Abrindo pinça → afasta
+      targetZ = Math.min(28, targetZ + delta * 20);
+      setVal("val-pinch", `${pinchPct} afasta`);
+    } else if (delta < -THRESHOLD) {
+      // Fechando pinça → aproxima
+      targetZ = Math.max(5, targetZ + delta * 20);
+      setVal("val-pinch", `${pinchPct} aproxima`);
+    } else {
+      setVal("val-pinch", `${pinchPct}`);
+    }
   }
+  prevPinchDist = pinchDist;
 
-  setStatus("hand", true, "detectada");
+  setStatus("hand", true, extended >= 4 ? "aberta" : "fechada");
 }
 
 // ─── Loop de detecção ────────────────────────────────────────────────────────
@@ -239,8 +257,10 @@ function detectHands() {
     if (results.landmarks && results.landmarks.length > 0) {
       processHand(results.landmarks[0]);
     } else {
-      autoRotate = true;
-      rotDir = 1;
+      autoRotate    = true;
+      dnaFrozen     = false;
+      rotDir        = 1;
+      prevPinchDist = null;
       setStatus("hand", false, "não detectada");
       setVal("val-dir", "auto");
       setVal("val-pinch", "—");
@@ -281,10 +301,12 @@ function animate() {
   const elapsed = clock.getElapsedTime();
 
   // Rotação do DNA
-  if (autoRotate) {
-    currentRotY += delta * 0.4;
-  } else if (rotDir !== 0) {
-    currentRotY += delta * rotDir * 1.2;
+  if (!dnaFrozen) {
+    if (autoRotate) {
+      currentRotY += delta * 0.4;          // sem mão: gira devagar
+    } else {
+      currentRotY += delta * rotDir * 1.2; // mão fechada: gira rápido
+    }
   }
   dnaGroup.rotation.y = currentRotY;
 
