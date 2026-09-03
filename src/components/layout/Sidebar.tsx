@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import {
   GraduationCap, LayoutDashboard, ClipboardList, Calendar,
   Users, BookOpen, School, UserCog, FileText, Settings,
-  LogOut, ChevronLeft, ChevronRight, Menu, X
+  LogOut, ChevronLeft, ChevronRight, Menu, X, Image
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Profile } from '@/types'
@@ -30,6 +30,7 @@ const navItems: NavItem[] = [
   { href: '/dashboard/representantes',label: 'Representantes',  icon: Users,           roles: ['admin','coordinator'] },
   { href: '/dashboard/relatorios',    label: 'Relatórios',      icon: FileText,        roles: ['admin','coordinator'] },
   { href: '/dashboard/configuracoes', label: 'Configurações',   icon: Settings,        roles: ['admin'] },
+  { href: '/dashboard/infografico',   label: 'Infográfico',     icon: Image,           roles: ['admin','coordinator','representative'] },
 ]
 
 const ROLE_LABELS: Record<string, string> = {
